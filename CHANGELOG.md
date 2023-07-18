@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `abi` directory to the `@cartesi/rollups` package, ideal for language bindings.
+- `outputsEpochRootHash` field to `OutputValidityProof`
 
 ### Changed
 
-- Encode outputs with `abi.encodeWithSignature`
+- Merged the tree of vouchers and the tree of notices into one tree of outputs
+- Updated the encoding of outputs, to use `abi.encodeWithSignature` instead of `abi.encode`, in order to add a 4-byte header
 
 ### Removed
 
@@ -24,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `grpc-interfaces` submodule
 - `rollups-cli` package
 - `onchain/rollups/abi`
+- `vouchersEpochRootHash` and `noticesEpochRootHash` fields from `OutputValidityProof`
 
 ## [1.0.0] 2023-08-22
 
