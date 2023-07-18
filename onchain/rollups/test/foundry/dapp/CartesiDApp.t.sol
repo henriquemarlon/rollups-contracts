@@ -60,6 +60,7 @@ contract CartesiDAppTest is TestBase {
 
     struct Voucher {
         address destination;
+        uint256 value;
         bytes payload;
     }
 
@@ -616,10 +617,18 @@ contract CartesiDAppTest is TestBase {
         return new SimpleERC721Receiver{salt: salt}();
     }
 
-    function addVoucher(address destination, bytes memory payload) internal {
+    function addVoucher(
+        address destination,
+        uint256 value,
+        bytes memory payload
+    ) internal {
         uint256 index = outputEnums.length;
         outputEnums.push(LibServerManager.OutputEnum.VOUCHER);
-        vouchers[index] = Voucher(destination, payload);
+        vouchers[index] = Voucher(destination, value, payload);
+    }
+
+    function addVoucher(address destination, bytes memory payload) internal {
+        addVoucher(destination, 0, payload);
     }
 
     function checkInputIndex(uint256 inputIndex) internal view {
@@ -706,7 +715,11 @@ contract CartesiDAppTest is TestBase {
         Voucher calldata voucher
     ) external pure returns (bytes memory) {
         return
-            OutputEncoding.encodeVoucher(voucher.destination, voucher.payload);
+            OutputEncoding.encodeVoucher(
+                voucher.destination,
+                voucher.value,
+                voucher.payload
+            );
     }
 
     function encodeNotice(
