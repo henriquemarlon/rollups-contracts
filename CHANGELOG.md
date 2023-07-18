@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `abi` directory to the `@cartesi/rollups` package, ideal for language bindings.
 
+### Changed
+
+- Encode outputs with `abi.encodeWithSignature`
+
 ### Removed
 
 - `docker-bake*.hcl`
