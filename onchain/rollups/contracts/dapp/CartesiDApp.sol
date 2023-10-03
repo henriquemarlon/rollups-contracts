@@ -70,12 +70,6 @@ contract CartesiDApp is
     /// @notice Raised when executing an already executed voucher.
     error VoucherReexecutionNotAllowed();
 
-    /// @notice Raised when the transfer fails.
-    error EtherTransferFailed();
-
-    /// @notice Raised when a mehtod is not called by DApp itself.
-    error OnlyDApp();
-
     /// @notice The initial machine state hash.
     /// @dev See the `getTemplateHash` function.
     bytes32 internal immutable templateHash;
@@ -237,22 +231,4 @@ contract CartesiDApp is
     /// @dev If you wish to transfer Ether to a DApp while informing
     ///      the DApp backend of it, then please do so through the Ether portal contract.
     receive() external payable {}
-
-    /// @notice Transfer some amount of Ether to some recipient.
-    /// @param _receiver The address which will receive the amount of Ether
-    /// @param _value The amount of Ether to be transferred in Wei
-    /// @dev This function can only be called by the DApp itself through vouchers.
-    ///      If this method is not called by DApp itself, `OnlyDApp` error is raised.
-    ///      If the transfer fails, `EtherTransferFailed` error is raised.
-    function withdrawEther(address _receiver, uint256 _value) external {
-        if (msg.sender != address(this)) {
-            revert OnlyDApp();
-        }
-
-        (bool sent, ) = _receiver.call{value: _value}("");
-
-        if (!sent) {
-            revert EtherTransferFailed();
-        }
-    }
 }
