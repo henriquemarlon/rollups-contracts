@@ -23,30 +23,21 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
     const InputBox = await deployments.deploy("InputBox", opts);
 
-    await deployments.deploy("EtherPortal", {
-        ...opts,
-        args: [InputBox.address],
-    });
-    await deployments.deploy("ERC20Portal", {
-        ...opts,
-        args: [InputBox.address],
-    });
-    await deployments.deploy("ERC721Portal", {
-        ...opts,
-        args: [InputBox.address],
-    });
-    await deployments.deploy("ERC1155SinglePortal", {
-        ...opts,
-        args: [InputBox.address],
-    });
-    await deployments.deploy("ERC1155BatchPortal", {
-        ...opts,
-        args: [InputBox.address],
-    });
-    await deployments.deploy("DAppAddressRelay", {
-        ...opts,
-        args: [InputBox.address],
-    });
+    const INPUT_RELAY_NAMES = [
+        "EtherPortal",
+        "ERC20Portal",
+        "ERC721Portal",
+        "ERC1155SinglePortal",
+        "ERC1155BatchPortal",
+        "DAppAddressRelay",
+    ];
+
+    for (const inputRelayName of INPUT_RELAY_NAMES) {
+        await deployments.deploy(inputRelayName, {
+            ...opts,
+            args: [InputBox.address],
+        });
+    }
 };
 
 export default func;
