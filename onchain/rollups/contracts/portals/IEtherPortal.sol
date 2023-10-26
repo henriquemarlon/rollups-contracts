@@ -9,6 +9,8 @@ import {IInputRelay} from "../inputs/IInputRelay.sol";
 interface IEtherPortal is IInputRelay {
     // Permissionless functions
 
+    function balanceOf(address _owner) external returns (uint256);
+
     /// @notice Transfer Ether to a DApp and add an input to
     /// the DApp's input box to signal such operation.
     ///

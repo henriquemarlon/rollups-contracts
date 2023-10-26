@@ -8,13 +8,15 @@ import {InputRelay} from "../inputs/InputRelay.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {InputEncoding} from "../common/InputEncoding.sol";
 
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+
 /// @title Ether Portal
 ///
-/// @notice This contract allows anyone to perform transfers of
-/// Ether to a DApp while informing the off-chain machine.
+/// @notice Manages Ether transfers to and from Cartesi DApps.
 contract EtherPortal is InputRelay, IEtherPortal {
-    /// @notice Raised when the Ether transfer fails.
-    error EtherTransferFailed();
+    using Address for address payable;
+
+    mapping(address => uint256) public balanceOf;
 
     /// @notice Constructs the portal.
     /// @param _inputBox The input box used by the portal
@@ -24,17 +26,36 @@ contract EtherPortal is InputRelay, IEtherPortal {
         address _dapp,
         bytes calldata _execLayerData
     ) external payable override {
-        // We used to call `transfer()` but it's not considered safe,
-        // as it assumes gas costs are immutable (they are not).
-        (bool success, ) = _dapp.call{value: msg.value}("");
+        balanceOf[_dapp] += msg.value;
 
-        if (!success) {
-            revert EtherTransferFailed();
-        }
+        addEtherDepositInput(_dapp, msg.value, _execLayerData);
+    }
 
+    function transfer(
+        address _dapp,
+        uint256 _value,
+        bytes calldata _execLayerData
+    ) external {
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_dapp] += _value;
+
+        addEtherDepositInput(_dapp, _value, _execLayerData);
+    }
+
+    function withdraw(address payable _recipient, uint256 _value) external {
+        balanceOf[msg.sender] -= _value;
+
+        _recipient.sendValue(_value);
+    }
+
+    function addEtherDepositInput(
+        address _dapp,
+        uint256 _value,
+        bytes calldata _execLayerData
+    ) internal {
         bytes memory input = InputEncoding.encodeEtherDeposit(
             msg.sender,
-            msg.value,
+            _value,
             _execLayerData
         );
 
