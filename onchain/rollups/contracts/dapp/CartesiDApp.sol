@@ -5,8 +5,9 @@ pragma solidity ^0.8.8;
 
 import {ICartesiDApp, Proof} from "./ICartesiDApp.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
+import {LibCalldata} from "../library/LibCalldata.sol";
 import {LibOutputValidation, OutputValidityProof} from "../library/LibOutputValidation.sol";
-import {OutputEncoding} from "../common/OutputEncoding.sol";
+import {Outputs} from "../common/Outputs.sol";
 
 import {Bitmask} from "@cartesi/util/contracts/Bitmask.sol";
 
@@ -68,6 +69,7 @@ contract CartesiDApp is
     using Bitmask for mapping(uint256 => uint256);
     using LibOutputValidation for OutputValidityProof;
     using Address for address;
+    using LibCalldata for bytes;
 
     /// @notice Raised when executing an already executed voucher.
     error VoucherReexecutionNotAllowed();
@@ -105,8 +107,7 @@ contract CartesiDApp is
     }
 
     function executeVoucher(
-        address _destination,
-        bytes calldata _payload,
+        bytes calldata _output,
         Proof calldata _proof
     ) external override nonReentrant {
         bytes32 epochHash;
@@ -125,10 +126,7 @@ contract CartesiDApp is
         );
 
         // reverts if proof isn't valid
-        _proof.validity.validateOutput(
-            OutputEncoding.encodeVoucher(_destination, _payload),
-            epochHash
-        );
+        _proof.validity.validateOutput(_output, epochHash);
 
         uint256 voucherPosition = LibOutputValidation.getBitMaskPosition(
             _proof.validity.outputIndexWithinInput,
@@ -140,8 +138,14 @@ contract CartesiDApp is
             revert VoucherReexecutionNotAllowed();
         }
 
+        // decode output
+        (address destination, bytes memory payload) = abi.decode(
+            _output.trimSelector(Outputs.Voucher.selector),
+            (address, bytes)
+        );
+
         // execute voucher
-        _destination.functionCall(_payload);
+        destination.functionCall(payload);
 
         // mark it as executed and emit event
         voucherBitmask.setBit(voucherPosition, true);
@@ -166,7 +170,7 @@ contract CartesiDApp is
     }
 
     function validateNotice(
-        bytes calldata _notice,
+        bytes calldata _output,
         Proof calldata _proof
     ) external view override {
         bytes32 epochHash;
@@ -184,10 +188,10 @@ contract CartesiDApp is
         );
 
         // reverts if proof isn't valid
-        _proof.validity.validateOutput(
-            OutputEncoding.encodeNotice(_notice),
-            epochHash
-        );
+        _proof.validity.validateOutput(_output, epochHash);
+
+        // decode output
+        abi.decode(_output.trimSelector(Outputs.Notice.selector), (bytes));
     }
 
     /// @notice Retrieve a claim about the DApp from the current consensus.
