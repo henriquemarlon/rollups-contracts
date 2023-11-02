@@ -142,7 +142,7 @@ contract CartesiDAppTest is TestBase {
         validateNotice(notice, proof);
 
         // reverts if notice is incorrect
-        bytes memory falseNotice = abi.encodePacked(bytes4(0xdeaddead));
+        bytes memory falseNotice = bytes("foobar");
         vm.expectRevert(
             LibOutputValidation.IncorrectOutputHashesRootHash.selector
         );
