@@ -8,7 +8,7 @@ import {Test} from "forge-std/Test.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {CanonicalMachine} from "contracts/common/CanonicalMachine.sol";
-import {LibInput} from "contracts/library/LibInput.sol";
+import {Inputs} from "contracts/common/Inputs.sol";
 
 contract InputBoxHandler is Test {
     IInputBox immutable inputBox;
@@ -98,12 +98,11 @@ contract InputBoxHandler is Test {
         );
 
         // Compute the input hash from the arguments passed to `addInput`
-        bytes32 computedInputHash = LibInput.computeInputHash(
-            msg.sender,
-            block.number,
-            block.timestamp,
-            _input,
-            index
+        bytes32 computedInputHash = keccak256(
+            abi.encodeCall(
+                Inputs.EvmAdvance,
+                (msg.sender, block.number, block.timestamp, index, _input)
+            )
         );
 
         // Check if the input hash matches the computed one
@@ -161,10 +160,12 @@ contract InputBoxTest is Test {
     function testAddLargeInput() public {
         address dapp = vm.addr(1);
 
-        inputBox.addInput(dapp, new bytes(CanonicalMachine.INPUT_MAX_SIZE));
+        uint256 maxLength = getMaxInputPayloadLength();
 
-        vm.expectRevert(LibInput.InputSizeExceedsLimit.selector);
-        inputBox.addInput(dapp, new bytes(CanonicalMachine.INPUT_MAX_SIZE + 1));
+        inputBox.addInput(dapp, new bytes(maxLength));
+
+        vm.expectRevert(IInputBox.InputSizeExceedsLimit.selector);
+        inputBox.addInput(dapp, new bytes(maxLength + 1));
     }
 
     // fuzz testing with multiple inputs
@@ -175,7 +176,7 @@ contract InputBoxTest is Test {
 
         // assume #bytes for each input is within bounds
         for (uint256 i; i < numInputs; ++i) {
-            vm.assume(_inputs[i].length <= CanonicalMachine.INPUT_MAX_SIZE);
+            vm.assume(_inputs[i].length <= getMaxInputPayloadLength());
         }
 
         // adding inputs
@@ -199,12 +200,17 @@ contract InputBoxTest is Test {
         // testing added inputs
         for (uint256 i; i < numInputs; ++i) {
             // compute input hash for each input
-            bytes32 inputHash = LibInput.computeInputHash(
-                address(this),
-                i, // block.number
-                i + year2022, // block.timestamp
-                _inputs[i],
-                i // inputBox.length
+            bytes32 inputHash = keccak256(
+                abi.encodeCall(
+                    Inputs.EvmAdvance,
+                    (
+                        address(this),
+                        i, // block.number
+                        i + year2022, // block.timestamp
+                        i, // inputBox.length
+                        _inputs[i]
+                    )
+                )
             );
             // test if input hash is the same as in InputBox
             assertEq(inputHash, inputBox.getInputHash(_dapp, i));
@@ -252,5 +258,16 @@ contract InputBoxTest is Test {
             sum += actual;
         }
         assertEq(sum, totalNumOfInputs, "total number of inputs");
+    }
+
+    function getMaxInputPayloadLength() internal pure returns (uint256) {
+        bytes memory blob = abi.encodeCall(
+            Inputs.EvmAdvance,
+            (address(0), 0, 0, 0, new bytes(32))
+        );
+        // number of bytes in input blob excluding input payload
+        uint256 extraBytes = blob.length - 32;
+        // because it's abi encoded, input payloads are stored as multiples of 32 bytes
+        return ((CanonicalMachine.INPUT_MAX_SIZE - extraBytes) / 32) * 32;
     }
 }

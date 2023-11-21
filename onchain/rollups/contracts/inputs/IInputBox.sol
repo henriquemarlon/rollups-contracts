@@ -5,11 +5,14 @@ pragma solidity ^0.8.8;
 
 /// @title Input Box interface
 interface IInputBox {
+    /// @notice Raised when input is larger than the machine limit.
+    error InputSizeExceedsLimit();
+
     /// @notice Emitted when an input is added to a DApp's input box.
     /// @param dapp The address of the DApp
     /// @param inputIndex The index of the input in the input box
     /// @param sender The address that sent the input
-    /// @param input The contents of the input
+    /// @param input The input payload
     /// @dev MUST be triggered on a successful call to `addInput`.
     event InputAdded(
         address indexed dapp,
@@ -20,7 +23,7 @@ interface IInputBox {
 
     /// @notice Add an input to a DApp's input box.
     /// @param _dapp The address of the DApp
-    /// @param _input The contents of the input
+    /// @param _input The input payload
     /// @return The hash of the input plus some extra metadata
     /// @dev MUST fire an `InputAdded` event accordingly.
     ///      Input larger than machine limit will raise `InputSizeExceedsLimit` error.
