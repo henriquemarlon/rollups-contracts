@@ -11,6 +11,8 @@ import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
+import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
+
 contract BadEtherReceiver {
     receive() external payable {
         revert("This contract does not accept Ether");
@@ -46,7 +48,7 @@ contract EtherPortalTest is Test {
     address alice;
     address dapp;
 
-    event InputAdded(address indexed dapp, uint256 indexed inputIndex, bytes input);
+    event InputAdded(address indexed dapp, uint256 indexed index, bytes input);
     event WatchedFallback(
         address sender,
         uint256 value,
@@ -66,7 +68,12 @@ contract EtherPortalTest is Test {
 
     function testEtherDeposit(uint256 value, bytes calldata data) public {
         // Construct the Ether deposit input
-        bytes memory input = abi.encodePacked(alice, value, data);
+        bytes memory payload = abi.encodePacked(alice, value, data);
+        bytes memory input = EvmAdvanceEncoder.encode(
+            address(etherPortal),
+            0,
+            payload
+        );
 
         // Transfer Ether to Alice and start impersonating her
         startHoax(alice, value);

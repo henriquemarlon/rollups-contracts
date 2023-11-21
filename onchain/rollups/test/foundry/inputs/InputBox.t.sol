@@ -10,6 +10,8 @@ import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {CanonicalMachine} from "contracts/common/CanonicalMachine.sol";
 import {Inputs} from "contracts/common/Inputs.sol";
 
+import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
+
 contract InputBoxHandler is Test {
     IInputBox immutable inputBox;
 
@@ -48,7 +50,7 @@ contract InputBoxHandler is Test {
         vm.roll(blockNumber);
     }
 
-    function addInput(address _dapp, bytes calldata _input) external {
+    function addInput(address _dapp, bytes calldata _payload) external {
         // For some reason, the invariant testing framework doesn't
         // record changes made to block properties, so we have to
         // set them in the beginning of every call
@@ -62,7 +64,7 @@ contract InputBoxHandler is Test {
 
         // Make the sender add the input to the DApp's input box
         vm.prank(msg.sender);
-        bytes32 inputHash = inputBox.addInput(_dapp, _input);
+        bytes32 inputHash = inputBox.addInput(_dapp, _payload);
 
         // If this is the first input being added to the DApp's input box,
         // then push the dapp to the array of dapps
@@ -101,7 +103,7 @@ contract InputBoxHandler is Test {
         bytes32 computedInputHash = keccak256(
             abi.encodeCall(
                 Inputs.EvmAdvance,
-                (msg.sender, block.number, block.timestamp, index, _input)
+                (msg.sender, block.number, block.timestamp, index, _payload)
             )
         );
 
@@ -136,7 +138,7 @@ contract InputBoxTest is Test {
     InputBox inputBox;
     InputBoxHandler handler;
 
-    event InputAdded(address indexed dapp, uint256 indexed inputIndex, bytes input);
+    event InputAdded(address indexed dapp, uint256 indexed index, bytes input);
 
     function setUp() public {
         inputBox = new InputBox();
@@ -164,18 +166,18 @@ contract InputBoxTest is Test {
     }
 
     // fuzz testing with multiple inputs
-    function testAddInput(address _dapp, bytes[] calldata _inputs) public {
-        uint256 numInputs = _inputs.length;
-        bytes32[] memory returnedValues = new bytes32[](numInputs);
+    function testAddInput(address _dapp, bytes[] calldata _payloads) public {
+        uint256 numPayloads = _payloads.length;
+        bytes32[] memory returnedValues = new bytes32[](numPayloads);
         uint256 year2022 = 1641070800; // Unix Timestamp for 2022
 
-        // assume #bytes for each input is within bounds
-        for (uint256 i; i < numInputs; ++i) {
-            vm.assume(_inputs[i].length <= getMaxInputPayloadLength());
+        // assume #bytes for each payload is within bounds
+        for (uint256 i; i < numPayloads; ++i) {
+            vm.assume(_payloads[i].length <= getMaxInputPayloadLength());
         }
 
         // adding inputs
-        for (uint256 i; i < numInputs; ++i) {
+        for (uint256 i; i < numPayloads; ++i) {
             // test for different block number and timestamp
             vm.roll(i);
             vm.warp(i + year2022); // year 2022
@@ -183,17 +185,23 @@ contract InputBoxTest is Test {
             // topics 1 and 2 are indexed; topic 3 isn't; check event data
             vm.expectEmit(true, true, false, true, address(inputBox));
 
-            // The event we expect
-            emit InputAdded(_dapp, i, _inputs[i]);
+            bytes memory input = EvmAdvanceEncoder.encode(
+                address(this),
+                i,
+                _payloads[i]
+            );
 
-            returnedValues[i] = inputBox.addInput(_dapp, _inputs[i]);
+            // The event we expect
+            emit InputAdded(_dapp, i, input);
+
+            returnedValues[i] = inputBox.addInput(_dapp, _payloads[i]);
 
             // test whether the number of inputs has increased
             assertEq(i + 1, inputBox.getNumberOfInputs(_dapp));
         }
 
         // testing added inputs
-        for (uint256 i; i < numInputs; ++i) {
+        for (uint256 i; i < numPayloads; ++i) {
             // compute input hash for each input
             bytes32 inputHash = keccak256(
                 abi.encodeCall(
@@ -203,7 +211,7 @@ contract InputBoxTest is Test {
                         i, // block.number
                         i + year2022, // block.timestamp
                         i, // inputBox.length
-                        _inputs[i]
+                        _payloads[i]
                     )
                 )
             );

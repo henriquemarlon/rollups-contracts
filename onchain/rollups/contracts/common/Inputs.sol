@@ -10,14 +10,14 @@ interface Inputs {
     /// @param sender The address of whoever sent the input
     /// @param blockNumber The number of the block in which the input was added
     /// @param blockTimestamp The timestamp of the block in which the input was added
-    /// @param inputIndex The index of the input in the DApp's input box
-    /// @param input The payload provided by the sender
+    /// @param index The index of the input in the DApp's input box
+    /// @param payload The payload provided by the sender
     function EvmAdvance(
         address sender,
         uint256 blockNumber,
         uint256 blockTimestamp,
-        uint256 inputIndex,
-        bytes calldata input
+        uint256 index,
+        bytes calldata payload
     ) external;
 
     /// @notice An inspect request to a Cartesi Machine.

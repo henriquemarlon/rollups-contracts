@@ -14,6 +14,8 @@ import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
+import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
+
 contract NormalToken is ERC1155 {
     constructor(
         address tokenOwner,
@@ -82,7 +84,7 @@ contract ERC1155SinglePortalTest is Test {
         uint256 id,
         uint256 value
     );
-    event InputAdded(address indexed dapp, uint256 indexed inputIndex, bytes input);
+    event InputAdded(address indexed dapp, uint256 indexed index, bytes input);
 
     function setUp() public {
         inputBox = new InputBox();
@@ -114,14 +116,20 @@ contract ERC1155SinglePortalTest is Test {
         // Expect TransferSingle to be emitted with the right arguments
         vm.expectEmit(true, true, true, true);
         emit TransferSingle(address(portal), alice, dapp, tokenId, value);
+
         // Expect InputAdded to be emitted with the right arguments
-        bytes memory input = InputEncoding.encodeSingleERC1155Deposit(
+        bytes memory payload = InputEncoding.encodeSingleERC1155Deposit(
             token,
             alice,
             tokenId,
             value,
             baseLayerData,
             execLayerData
+        );
+        bytes memory input = EvmAdvanceEncoder.encode(
+            address(portal),
+            0,
+            payload
         );
         vm.expectEmit(true, true, false, true, address(inputBox));
         emit InputAdded(dapp, 0, input);
@@ -197,14 +205,20 @@ contract ERC1155SinglePortalTest is Test {
         // Expect TransferSingle to be emitted with the right arguments
         vm.expectEmit(true, true, true, true);
         emit TransferSingle(address(portal), alice, dapp, tokenId, value);
+
         // Expect InputAdded to be emitted with the right arguments
-        bytes memory input = InputEncoding.encodeSingleERC1155Deposit(
+        bytes memory payload = InputEncoding.encodeSingleERC1155Deposit(
             token,
             alice,
             tokenId,
             value,
             baseLayerData,
             execLayerData
+        );
+        bytes memory input = EvmAdvanceEncoder.encode(
+            address(portal),
+            0,
+            payload
         );
         vm.expectEmit(true, true, false, true, address(inputBox));
         emit InputAdded(dapp, 0, input);

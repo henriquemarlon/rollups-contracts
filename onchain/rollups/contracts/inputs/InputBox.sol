@@ -13,8 +13,8 @@ import {Inputs} from "../common/Inputs.sol";
 /// data from anyone and adds a compound hash to an append-only list
 /// (called "input box"). Each DApp has its own input box.
 ///
-/// The input hash is composed by the input payload, the block number and timestamp,
-/// the address of the input sender, and the index of the input.
+/// The input blob is composed of the address of the input sender,
+/// the block number and timestamp, the input index and payload.
 ///
 /// Data availability is guaranteed by the emission of `InputAdded` events
 /// on every successful call to `addInput`. This ensures that inputs can be
@@ -32,14 +32,14 @@ contract InputBox is IInputBox {
 
     function addInput(
         address _dapp,
-        bytes calldata _input
+        bytes calldata _payload
     ) external override returns (bytes32) {
         bytes32[] storage inputBox = inputBoxes[_dapp];
-        uint256 inputIndex = inputBox.length;
+        uint256 index = inputBox.length;
 
         bytes memory input = abi.encodeCall(
             Inputs.EvmAdvance,
-            (msg.sender, block.number, block.timestamp, inputIndex, _input)
+            (msg.sender, block.number, block.timestamp, index, _payload)
         );
 
         if (input.length > CanonicalMachine.INPUT_MAX_SIZE) {
@@ -48,11 +48,9 @@ contract InputBox is IInputBox {
 
         bytes32 inputHash = keccak256(input);
 
-        // add input to the input box
         inputBox.push(inputHash);
 
-        // block.number and timestamp can be retrieved by the event metadata itself
-        emit InputAdded(_dapp, inputIndex, input);
+        emit InputAdded(_dapp, index, input);
 
         return inputHash;
     }
