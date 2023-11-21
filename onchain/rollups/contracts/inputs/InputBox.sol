@@ -52,7 +52,7 @@ contract InputBox is IInputBox {
         inputBox.push(inputHash);
 
         // block.number and timestamp can be retrieved by the event metadata itself
-        emit InputAdded(_dapp, inputIndex, msg.sender, _input);
+        emit InputAdded(_dapp, inputIndex, input);
 
         return inputHash;
     }

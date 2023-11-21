@@ -71,6 +71,7 @@ contract ERC1155BatchPortalTest is Test {
         uint256[] ids,
         uint256[] values
     );
+    event InputAdded(address indexed dapp, uint256 indexed inputIndex, bytes input);
 
     function setUp() public {
         inputBox = new InputBox();
@@ -105,6 +106,17 @@ contract ERC1155BatchPortalTest is Test {
         // Expect TransferBatch to be emitted with the right arguments
         vm.expectEmit(true, true, true, true);
         emit TransferBatch(address(portal), alice, dapp, tokenIds, values);
+        // Expect InputAdded to be emitted with the right arguments
+        bytes memory input = this.encodeBatchERC1155Deposit(
+            token,
+            alice,
+            tokenIds,
+            values,
+            baseLayerData,
+            execLayerData
+        );
+        vm.expectEmit(true, true, false, true, address(inputBox));
+        emit InputAdded(dapp, 0, input);
 
         portal.depositBatchERC1155Token(
             token,
@@ -180,6 +192,17 @@ contract ERC1155BatchPortalTest is Test {
         // Expect TransferBatch to be emitted with the right arguments
         vm.expectEmit(true, true, true, true);
         emit TransferBatch(address(portal), alice, dapp, tokenIds, values);
+        // Expect InputAdded to be emitted with the right arguments
+        bytes memory input = this.encodeBatchERC1155Deposit(
+            token,
+            alice,
+            tokenIds,
+            values,
+            baseLayerData,
+            execLayerData
+        );
+        vm.expectEmit(true, true, false, true, address(inputBox));
+        emit InputAdded(dapp, 0, input);
 
         portal.depositBatchERC1155Token(
             token,
@@ -261,6 +284,25 @@ contract ERC1155BatchPortalTest is Test {
             values[i] = (value <= totalSupplies[i]) ? value : totalSupplies[i];
         }
         return values;
+    }
+
+    function encodeBatchERC1155Deposit(
+        IERC1155 _token,
+        address _sender,
+        uint256[] calldata _tokenIds,
+        uint256[] calldata _values,
+        bytes calldata _baseLayerData,
+        bytes calldata _execLayerData
+    ) external pure returns (bytes memory) {
+        return
+            InputEncoding.encodeBatchERC1155Deposit(
+                _token,
+                _sender,
+                _tokenIds,
+                _values,
+                _baseLayerData,
+                _execLayerData
+            );
     }
 }
 

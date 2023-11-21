@@ -12,6 +12,7 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
+import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
 contract NormalToken is ERC1155 {
     constructor(
@@ -81,6 +82,7 @@ contract ERC1155SinglePortalTest is Test {
         uint256 id,
         uint256 value
     );
+    event InputAdded(address indexed dapp, uint256 indexed inputIndex, bytes input);
 
     function setUp() public {
         inputBox = new InputBox();
@@ -112,6 +114,17 @@ contract ERC1155SinglePortalTest is Test {
         // Expect TransferSingle to be emitted with the right arguments
         vm.expectEmit(true, true, true, true);
         emit TransferSingle(address(portal), alice, dapp, tokenId, value);
+        // Expect InputAdded to be emitted with the right arguments
+        bytes memory input = InputEncoding.encodeSingleERC1155Deposit(
+            token,
+            alice,
+            tokenId,
+            value,
+            baseLayerData,
+            execLayerData
+        );
+        vm.expectEmit(true, true, false, true, address(inputBox));
+        emit InputAdded(dapp, 0, input);
 
         portal.depositSingleERC1155Token(
             token,
@@ -184,6 +197,17 @@ contract ERC1155SinglePortalTest is Test {
         // Expect TransferSingle to be emitted with the right arguments
         vm.expectEmit(true, true, true, true);
         emit TransferSingle(address(portal), alice, dapp, tokenId, value);
+        // Expect InputAdded to be emitted with the right arguments
+        bytes memory input = InputEncoding.encodeSingleERC1155Deposit(
+            token,
+            alice,
+            tokenId,
+            value,
+            baseLayerData,
+            execLayerData
+        );
+        vm.expectEmit(true, true, false, true, address(inputBox));
+        emit InputAdded(dapp, 0, input);
 
         portal.depositSingleERC1155Token(
             token,

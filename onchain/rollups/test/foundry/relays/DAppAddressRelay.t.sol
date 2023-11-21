@@ -15,12 +15,7 @@ contract DAppAddressRelayTest is Test {
     IInputBox inputBox;
     IDAppAddressRelay relay;
 
-    event InputAdded(
-        address indexed dapp,
-        uint256 indexed inputIndex,
-        address sender,
-        bytes input
-    );
+    event InputAdded(address indexed dapp, uint256 indexed inputIndex, bytes input);
 
     function setUp() public {
         inputBox = new InputBox();
@@ -40,7 +35,7 @@ contract DAppAddressRelayTest is Test {
 
         // Expect InputAdded to be emitted with the right arguments
         vm.expectEmit(true, true, false, true, address(inputBox));
-        emit InputAdded(_dapp, 0, address(relay), input);
+        emit InputAdded(_dapp, 0, input);
 
         // Relay the DApp's address
         relay.relayDAppAddress(_dapp);

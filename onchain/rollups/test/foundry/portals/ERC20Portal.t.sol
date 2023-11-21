@@ -117,12 +117,7 @@ contract ERC20PortalTest is Test {
     address alice;
     address dapp;
 
-    event InputAdded(
-        address indexed dapp,
-        uint256 indexed inputIndex,
-        address sender,
-        bytes input
-    );
+    event InputAdded(address indexed dapp, uint256 indexed inputIndex, bytes input);
     event WatchedTransfer(
         address from,
         address to,
@@ -160,7 +155,7 @@ contract ERC20PortalTest is Test {
 
         // Expect InputAdded to be emitted with the right arguments
         vm.expectEmit(true, true, false, true, address(inputBox));
-        emit InputAdded(dapp, 0, address(portal), input);
+        emit InputAdded(dapp, 0, input);
 
         // Transfer ERC-20 tokens to the DApp via the portal
         portal.depositERC20Tokens(token, dapp, _amount, _data);

@@ -136,12 +136,7 @@ contract InputBoxTest is Test {
     InputBox inputBox;
     InputBoxHandler handler;
 
-    event InputAdded(
-        address indexed dapp,
-        uint256 indexed inputIndex,
-        address sender,
-        bytes input
-    );
+    event InputAdded(address indexed dapp, uint256 indexed inputIndex, bytes input);
 
     function setUp() public {
         inputBox = new InputBox();
@@ -189,7 +184,7 @@ contract InputBoxTest is Test {
             vm.expectEmit(true, true, false, true, address(inputBox));
 
             // The event we expect
-            emit InputAdded(_dapp, i, address(this), _inputs[i]);
+            emit InputAdded(_dapp, i, _inputs[i]);
 
             returnedValues[i] = inputBox.addInput(_dapp, _inputs[i]);
 

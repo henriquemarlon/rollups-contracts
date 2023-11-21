@@ -11,15 +11,9 @@ interface IInputBox {
     /// @notice Emitted when an input is added to a DApp's input box.
     /// @param dapp The address of the DApp
     /// @param inputIndex The index of the input in the input box
-    /// @param sender The address that sent the input
     /// @param input The input payload
     /// @dev MUST be triggered on a successful call to `addInput`.
-    event InputAdded(
-        address indexed dapp,
-        uint256 indexed inputIndex,
-        address sender,
-        bytes input
-    );
+    event InputAdded(address indexed dapp, uint256 indexed inputIndex, bytes input);
 
     /// @notice Add an input to a DApp's input box.
     /// @param _dapp The address of the DApp
