@@ -6,7 +6,7 @@ pragma solidity ^0.8.8;
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {IInputRelay} from "../inputs/IInputRelay.sol";
-import {OutputValidityProof} from "../library/LibOutputValidation.sol";
+import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 
 /// @notice Data for validating outputs.
 /// @param validity A validity proof for the output
