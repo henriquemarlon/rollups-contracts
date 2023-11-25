@@ -4,6 +4,7 @@
 pragma solidity ^0.8.8;
 
 import {Vm} from "forge-std/Vm.sol";
+import {InputRange} from "contracts/common/InputRange.sol";
 
 library LibServerManager {
     using LibServerManager for string;
@@ -168,6 +169,44 @@ library LibServerManager {
         bytes32 vouchersEpochRootHash;
         bytes32 noticesEpochRootHash;
         Proof[] proofs;
+    }
+
+    function getInputRange(
+        Proof[] memory proofs
+    ) internal pure returns (InputRange memory) {
+        return
+            InputRange({
+                firstInputIndex: getSmallestInputIndex(proofs),
+                lastInputIndex: getLargestInputIndex(proofs)
+            });
+    }
+
+    function getSmallestInputIndex(
+        Proof[] memory proofs
+    ) internal pure returns (uint256) {
+        uint256 smallestInputIndex = proofs[0].inputIndex;
+        for (uint256 i = 1; i < proofs.length; ++i) {
+            Proof memory proof = proofs[i];
+            uint256 inputIndex = proof.inputIndex;
+            if (inputIndex < smallestInputIndex) {
+                smallestInputIndex = inputIndex;
+            }
+        }
+        return smallestInputIndex;
+    }
+
+    function getLargestInputIndex(
+        Proof[] memory proofs
+    ) internal pure returns (uint256) {
+        uint256 largestInputIndex = proofs[0].inputIndex;
+        for (uint256 i = 1; i < proofs.length; ++i) {
+            Proof memory proof = proofs[i];
+            uint256 inputIndex = proof.inputIndex;
+            if (inputIndex > largestInputIndex) {
+                largestInputIndex = inputIndex;
+            }
+        }
+        return largestInputIndex;
     }
 
     function proves(

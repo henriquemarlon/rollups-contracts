@@ -10,6 +10,8 @@ import {IInputRelay} from "../inputs/IInputRelay.sol";
 import {LibOutputValidation} from "../library/LibOutputValidation.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Proof} from "../common/Proof.sol";
+import {LibProof} from "../library/LibProof.sol";
+import {InputRange} from "../common/InputRange.sol";
 
 import {Bitmask} from "@cartesi/util/contracts/Bitmask.sol";
 
@@ -71,6 +73,7 @@ contract CartesiDApp is
 {
     using Bitmask for mapping(uint256 => uint256);
     using LibOutputValidation for OutputValidityProof;
+    using LibProof for Proof;
     using Address for address;
 
     /// @notice Raised when executing an already executed voucher.
@@ -109,7 +112,6 @@ contract CartesiDApp is
     /// @param _inputRelays The input relays
     /// @param _owner The initial DApp owner
     /// @param _templateHash The initial machine state hash
-    /// @dev Calls the `join` function on `_consensus`.
     constructor(
         IConsensus _consensus,
         IInputBox _inputBox,
@@ -124,8 +126,6 @@ contract CartesiDApp is
         for (uint256 i; i < _inputRelays.length; ++i) {
             inputRelays.push(_inputRelays[i]);
         }
-
-        _consensus.join();
     }
 
     function executeVoucher(
@@ -133,20 +133,11 @@ contract CartesiDApp is
         bytes calldata _payload,
         Proof calldata _proof
     ) external override nonReentrant {
-        bytes32 epochHash;
-        uint256 firstInputIndex;
-        uint256 lastInputIndex;
-        uint256 inputIndex;
+        // calculate the input index, and check if it is inside the range
+        uint256 inputIndex = _proof.getInputIndex();
 
-        // query the current consensus for the desired claim
-        (epochHash, firstInputIndex, lastInputIndex) = getClaim(_proof.context);
-
-        // validate input index range and calculate the input index
-        // based on the input index range provided by the consensus
-        inputIndex = _proof.validity.validateInputIndexRange(
-            firstInputIndex,
-            lastInputIndex
-        );
+        // query the current consensus for the desired epoch hash
+        bytes32 epochHash = getEpochHash(_proof.inputRange);
 
         // reverts if proof isn't valid
         _proof.validity.validateVoucher(_destination, _payload, epochHash);
@@ -190,43 +181,29 @@ contract CartesiDApp is
         bytes calldata _notice,
         Proof calldata _proof
     ) external view override {
-        bytes32 epochHash;
-        uint256 firstInputIndex;
-        uint256 lastInputIndex;
+        // calculate the input index, and check if it is inside the range
+        _proof.getInputIndex();
 
         // query the current consensus for the desired claim
-        (epochHash, firstInputIndex, lastInputIndex) = getClaim(_proof.context);
-
-        // validate the epoch input index based on the input index range
-        // provided by the consensus
-        _proof.validity.validateInputIndexRange(
-            firstInputIndex,
-            lastInputIndex
-        );
+        bytes32 epochHash = getEpochHash(_proof.inputRange);
 
         // reverts if proof isn't valid
         _proof.validity.validateNotice(_notice, epochHash);
     }
 
-    /// @notice Retrieve a claim about the DApp from the current consensus.
-    ///         The encoding of `_proofContext` might vary depending on the implementation.
-    /// @param _proofContext Data for retrieving the desired claim
-    /// @return The claimed epoch hash
-    /// @return The index of the first input of the epoch in the input box
-    /// @return The index of the last input of the epoch in the input box
-    function getClaim(
-        bytes calldata _proofContext
-    ) internal view returns (bytes32, uint256, uint256) {
-        return consensus.getClaim(address(this), _proofContext);
+    /// @notice Get the epoch hash regarding the given input range and the DApp from the current consensus.
+    /// @param _inputRange The input range
+    /// @return The epoch hash
+    function getEpochHash(
+        InputRange calldata _inputRange
+    ) internal view returns (bytes32) {
+        return consensus.getEpochHash(address(this), _inputRange);
     }
 
     function migrateToConsensus(
         IConsensus _newConsensus
     ) external override onlyOwner {
         consensus = _newConsensus;
-
-        _newConsensus.join();
-
         emit NewConsensus(_newConsensus);
     }
 
