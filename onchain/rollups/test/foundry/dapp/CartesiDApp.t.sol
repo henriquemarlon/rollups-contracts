@@ -92,7 +92,7 @@ contract CartesiDAppTest is TestBase {
     uint256 immutable transferAmount;
     IInputRelay[] inputRelays;
 
-    event VoucherExecuted(uint256 voucherPosition);
+    event VoucherExecuted(uint256 inputIndex, uint256 outputIndexWithinInput);
     event OwnershipTransferred(
         address indexed previousOwner,
         address indexed newOwner
@@ -221,10 +221,8 @@ contract CartesiDAppTest is TestBase {
         // expect event
         vm.expectEmit(false, false, false, true, address(dapp));
         emit VoucherExecuted(
-            LibOutputValidation.getBitMaskPosition(
-                proof.validity.outputIndexWithinInput,
-                getInputIndex(proof)
-            )
+            getInputIndex(proof),
+            proof.validity.outputIndexWithinInput
         );
 
         // perform call
@@ -381,10 +379,8 @@ contract CartesiDAppTest is TestBase {
         // expect event
         vm.expectEmit(false, false, false, true, address(dapp));
         emit VoucherExecuted(
-            LibOutputValidation.getBitMaskPosition(
-                proof.validity.outputIndexWithinInput,
-                getInputIndex(proof)
-            )
+            getInputIndex(proof),
+            proof.validity.outputIndexWithinInput
         );
 
         // perform call
@@ -494,10 +490,8 @@ contract CartesiDAppTest is TestBase {
         // expect event
         vm.expectEmit(false, false, false, true, address(dapp));
         emit VoucherExecuted(
-            LibOutputValidation.getBitMaskPosition(
-                proof.validity.outputIndexWithinInput,
-                getInputIndex(proof)
-            )
+            getInputIndex(proof),
+            proof.validity.outputIndexWithinInput
         );
 
         // perform call

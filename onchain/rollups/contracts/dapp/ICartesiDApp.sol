@@ -19,9 +19,9 @@ interface ICartesiDApp {
     event NewConsensus(IConsensus newConsensus);
 
     /// @notice A voucher was executed from the DApp.
-    /// @param voucherId A number that uniquely identifies the voucher
-    ///                  amongst all vouchers emitted by this DApp
-    event VoucherExecuted(uint256 voucherId);
+    /// @param inputIndex The index of the input that emitted the voucher
+    /// @param outputIndexWithinInput The index of the voucher amongst all outputs emitted by the input
+    event VoucherExecuted(uint256 inputIndex, uint256 outputIndexWithinInput);
 
     // Permissioned functions
 
