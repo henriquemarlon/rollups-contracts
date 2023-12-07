@@ -1,126 +1,173 @@
 # @cartesi/rollups
 
+## 2.0.0
+
+### Major Changes
+
+-   9c586026: Changed the behavior of the `executeVoucher` function from the `CartesiDApp` contract to propagate any errors raised by the message call.
+    This should allow users and developers to know the reason as to why a given voucher failed to execute.
+    Front-ends should propagate the error message to the user to improve the UX.
+    Smart contracts that call this function should either try to handle the error or propagate it.
+-   cc3ae5c1: Removed `AuthorityHistoryPairFactory` and `IAuthorityHistoryPairFactory`.
+    These contracts will no longer be necessary, given the refactor in the `Authority` contract.
+-   69bee531: Removed `HistoryFactory` and `IHistoryFactory`.
+    These contracts will no longer be necessary, given the refactor in the `Authority` contract.
+-   94712486: Removed the boolean return value from the functions `executeVoucher` and `validateNotice` of the `ICartesiDApp` interface.
+    This change was made because these functions would never return `false`.
+    Contracts and EOAs that called these functions now shouldn't expect a boolean return value.
+-   96c0241c: Removed `History`.
+    This contract will no longer be necessary, given the refactor in the `Authority` contract.
+-   d0634784: Removed the boolean `success` flag from ERC-20 deposit inputs.
+    This change was made because this flag would always be `true`, giving no extra information to the DApp back-end.
+    Consumers of this input should be aware of the new encoding.
+-   40a0d07c: Added a `getInputBox` function to the `ICartesiDApp` interface.
+    Added an `IInputBox` parameter to the functions and events of the `ICartesiDAppFactory` interface, and to the constructor of the `CartesiDApp` contract.
+    This change was made to allow the node to discover the `IInputBox` contract to listen `InputAdded` events from, just by calling the function from the `ICartesiDApp` interface.
+    Likewise, users can now know which `IInputBox` contract they should add inputs to, directly or indirectly, in order to communicate with a given DApp.
+    Users of `ICartesiDAppFactory` should now pass an extra `IInputBox` parameter on deployment.
+    Off-chain components should now listen to the new `ApplicationCreated` event.
+-   28777dc3: Implemented EIP-165 for CartesiDApp contract.
+    Also updated `ICartesiDApp` to include `IERC721Receiver`, `IERC1155Receiver` (which inherits from `IERC165`).
+    We made the `ICartesiDApp` interface inherit from `ERC165` so that it would be possible to detect contracts that do not support such interface.
+-   e2bc71cc: Removed `AuthorityWithdrawalFailed` error from the `Authority` contract.
+    This error was removed because it would only be raised by the `withdrawERC20Tokens` function, which was removed.
+-   90d5ccc3: Implemented EIP-165 for input relays.
+    This is because `CartesiDApp` can return an array of input relays. EIP-165 helps to tell which interfaces the relay implements.
+-   e2bc71cc: Removed the `withdrawERC20Tokens` function from `Authority` contract.
+    This function was removed due to the lack of usage, and because implementing a similar function for `Quorum` would not be possible with `@openzeppelin/contracts@5.0.0`.
+    Users should not transfer ERC-20 tokens to `Authority` contracts, as it now no longer defines an entry point for withdrawing them, leaving them stuck there forever.
+    Users should not try to call this function, as it is no longer present in the contract.
+-   00a5b143: Changed the ERC-20 portal to revert whenever `transferFrom` returns `false`.
+    This change was made to prevent DApp back-end developers from accepting failed transfers by not checking the `success` flag of ERC-20 deposit inputs.
+    We used OpenZeppelin's `SafeERC20` to deliver an even safer and user-friendly experience through the ERC-20 portal.
+-   1da601ad: Added a `getInputRelays` function to the `ICartesiDApp` interface.
+    Added `inputRelays` parameter to the functions and events of the `ICartesiDAppFactory` interface, and to the constructor of the `CartesiDApp` contract.
+    This change was made to allow the node to discover the input relay contracts that the DApp back-end may expect inputs from, just by calling the `getInputRelays` function from the `ICartesiDApp` interface.
+    Likewise, users can now know which input relay contracts they should add inputs through, in order to communicate with a given DApp.
+    Users of `ICartesiDAppFactory` should now pass an extra `inputRelays` array parameter on deployment.
+    Off-chain components should now listen to the new `ApplicationCreated` event.
+
 ## 1.1.0
 
 ### Minor Changes
 
-- `AuthorityFactory`: Allows anyone to deploy `Authority` contracts. Supports deterministic deployment.
-- `HistoryFactory`: Allows anyone to deploy `History` contracts. Supports deterministic deployment.
-- `AuthorityHistoryPairFactory`: Allows anyone to deploy `Authority` and `History` contract pairs (such that `History` is owned by `Authority`, and `Authority` stores/retrieves claims from `History`). Supports deterministic deployment.
-- `Authority`: Removed deployment files and script.
-- `History`: Removed deployment files and script.
+-   `AuthorityFactory`: Allows anyone to deploy `Authority` contracts. Supports deterministic deployment.
+-   `HistoryFactory`: Allows anyone to deploy `History` contracts. Supports deterministic deployment.
+-   `AuthorityHistoryPairFactory`: Allows anyone to deploy `Authority` and `History` contract pairs (such that `History` is owned by `Authority`, and `Authority` stores/retrieves claims from `History`). Supports deterministic deployment.
+-   `Authority`: Removed deployment files and script.
+-   `History`: Removed deployment files and script.
 
 ## 1.0.0
 
 ### Major Changes
 
-- Added `InvalidClaimIndex` error in `History` contract
-- Made portals and relays inherit `InputRelay`
-- Renamed `inboxInputIndex` to `inputIndex` in contracts
-- Deployed contracts deterministically with `CREATE2` factory
-- Renamed fields in `OutputValidityProof` structure
-- Updated `@cartesi/util` to 6.0.0
-- Removed base portal and relay contracts and interfaces
-- Removed `ConsensusCreated` event from `Authority` contract
-- Removed `IInputBox` parameter from `Authority` constructor
-- Fixed input size limit in `InputBox` contract
+-   Added `InvalidClaimIndex` error in `History` contract
+-   Made portals and relays inherit `InputRelay`
+-   Renamed `inboxInputIndex` to `inputIndex` in contracts
+-   Deployed contracts deterministically with `CREATE2` factory
+-   Renamed fields in `OutputValidityProof` structure
+-   Updated `@cartesi/util` to 6.0.0
+-   Removed base portal and relay contracts and interfaces
+-   Removed `ConsensusCreated` event from `Authority` contract
+-   Removed `IInputBox` parameter from `Authority` constructor
+-   Fixed input size limit in `InputBox` contract
 
 ### Minor Changes
 
-- Added input relay interface and base contract
-- Deployed ERC-1155 portals
-- Added `RPC_URL` environment variable during deployment
-- Started using custom errors in contracts
+-   Added input relay interface and base contract
+-   Deployed ERC-1155 portals
+-   Added `RPC_URL` environment variable during deployment
+-   Started using custom errors in contracts
 
 ### Patch Changes
 
-- Improved proof generation system for on-chain tests
+-   Improved proof generation system for on-chain tests
 
 ## 0.9.0
 
 ### Major Changes
 
-- Simplified the on-chain architecture (not backwards-compatible)
-- `CartesiDApp` does not implement [EIP-2535](https://eips.ethereum.org/EIPS/eip-2535) anymore
-- Made each Portal a contract of their own, and shared amongst all the DApps
-- Made inputs added by Portals more compact by using the [packed ABI encoding](https://docs.soliditylang.org/en/latest/abi-spec.html#non-standard-packed-mode) instead of the standard one
-- Made ERC-20 deposits more generic by allowing base layer transfers to fail, and adding a boolean field signaling whether it was successful or not
-- Made ERC-721 deposits more generic by adding an arbitrary data field to be interpreted by the off-chain machine in the execution layer
-- Moved the input boxes of every DApp into a single, permissionless contract
-- Input boxes are now append-only—they are not cleared every new epoch (old Input Facet)
-- Modularized the consensus layer (a DApp can now seamlessly change its consensus model)
-- Modularized the claim storage layer (a consensus can now seamlessly change how it stores claims)
-- Voucher bitmask position is now determined by the input index (in the input box) and output index
-- Validators need now to specify the range of inputs of each claim they submit on-chain
-- Removed Setup Input
-- Removed Quorum consensus model implementation (up to 8 validators)
-- Removed Bank contract
-- Removed DApp configuration parameters related to the off-chain machine specs (now defined as constants)
-- Removed `epochIndex` field from `OutputValidityProof` struct
-- Removed headers from inputs added by trusted permissionless contracts like portals and relayers
+-   Simplified the on-chain architecture (not backwards-compatible)
+-   `CartesiDApp` does not implement [EIP-2535](https://eips.ethereum.org/EIPS/eip-2535) anymore
+-   Made each Portal a contract of their own, and shared amongst all the DApps
+-   Made inputs added by Portals more compact by using the [packed ABI encoding](https://docs.soliditylang.org/en/latest/abi-spec.html#non-standard-packed-mode) instead of the standard one
+-   Made ERC-20 deposits more generic by allowing base layer transfers to fail, and adding a boolean field signaling whether it was successful or not
+-   Made ERC-721 deposits more generic by adding an arbitrary data field to be interpreted by the off-chain machine in the execution layer
+-   Moved the input boxes of every DApp into a single, permissionless contract
+-   Input boxes are now append-only—they are not cleared every new epoch (old Input Facet)
+-   Modularized the consensus layer (a DApp can now seamlessly change its consensus model)
+-   Modularized the claim storage layer (a consensus can now seamlessly change how it stores claims)
+-   Voucher bitmask position is now determined by the input index (in the input box) and output index
+-   Validators need now to specify the range of inputs of each claim they submit on-chain
+-   Removed Setup Input
+-   Removed Quorum consensus model implementation (up to 8 validators)
+-   Removed Bank contract
+-   Removed DApp configuration parameters related to the off-chain machine specs (now defined as constants)
+-   Removed `epochIndex` field from `OutputValidityProof` struct
+-   Removed headers from inputs added by trusted permissionless contracts like portals and relayers
 
 ### Minor Changes
 
-- Added Authority consensus model implementation (single validator)
-- Added Simple claim storage implementation (one claim per DApp)
-- Added Library that defines several constants related to the canonical off-chain machine
-- DApp Address Relay contract (allows the off-chain machine to know the DApp's address)
+-   Added Authority consensus model implementation (single validator)
+-   Added Simple claim storage implementation (one claim per DApp)
+-   Added Library that defines several constants related to the canonical off-chain machine
+-   DApp Address Relay contract (allows the off-chain machine to know the DApp's address)
 
 ### Patch Changes
 
-- Added script for updating proofs used in unit tests
-- Adopted [Foundry](https://book.getfoundry.sh/) for contract testing (Hardhat is still being used for deployment)
+-   Added script for updating proofs used in unit tests
+-   Adopted [Foundry](https://book.getfoundry.sh/) for contract testing (Hardhat is still being used for deployment)
 
 ## 0.7.0
 
 ### Major Changes
 
-- Documentation updates
+-   Documentation updates
 
 ## 0.6.0
 
 ### Minor Changes
 
-- Deploy to Arbitrum Goerli and Optimism Goerli
+-   Deploy to Arbitrum Goerli and Optimism Goerli
 
 ## 0.5.0
 
 ### Major Changes
 
-- Add `validateNotice` function to OutputFacet
+-   Add `validateNotice` function to OutputFacet
 
 ## 0.3.0
 
 ### Major Changes
 
-- Moved logic from `erc721Deposit` function to `onERC721Received`
-- Renamed `ERC721Deposited` event to `ERC721Received` and added `operator` field
-- Validators who lost a dispute are removed from the validator set, and cannot redeem fees from previous claims
-- Changed the visibility of `Bank`'s state variables to private
-- Changed the visibility of `LibClaimsMask`'s functions to internal
-- Removed `erc721Deposit` function (call `safeTransferFrom` from the ERC-721 contract instead)
-- Removed `erc20Withdrawal` function call (vouchers now call `transfer` from the ERC-20 contract directly instead)
-- Gas optimizations
+-   Moved logic from `erc721Deposit` function to `onERC721Received`
+-   Renamed `ERC721Deposited` event to `ERC721Received` and added `operator` field
+-   Validators who lost a dispute are removed from the validator set, and cannot redeem fees from previous claims
+-   Changed the visibility of `Bank`'s state variables to private
+-   Changed the visibility of `LibClaimsMask`'s functions to internal
+-   Removed `erc721Deposit` function (call `safeTransferFrom` from the ERC-721 contract instead)
+-   Removed `erc20Withdrawal` function call (vouchers now call `transfer` from the ERC-20 contract directly instead)
+-   Gas optimizations
 
 ### Minor Changes
 
-- Add factory contract to deploy rollups diamond
+-   Add factory contract to deploy rollups diamond
 
 ### Patch Changes
 
-- Mermaid diagram of the on-chain rollups on README
+-   Mermaid diagram of the on-chain rollups on README
 
 ## 0.2.0
 
 ### Major Changes
 
-- Bumped solc version to 0.8.13
-- Updated architecture to Diamonds design pattern
-- Added `FeeManagerFacet` and `Bank` contracts
-- Template Hash
-- Setup Input
-- NFT Portal
-- Removed Specific ERC-20 Portal
+-   Bumped solc version to 0.8.13
+-   Updated architecture to Diamonds design pattern
+-   Added `FeeManagerFacet` and `Bank` contracts
+-   Template Hash
+-   Setup Input
+-   NFT Portal
+-   Removed Specific ERC-20 Portal
 
 ## 0.1.0
 
